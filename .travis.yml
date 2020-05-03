@@ -1,0 +1,23 @@
+sudo: required
+language: generic
+service:
+  - docker
+
+before_install:
+  - docker build -t danibrenna/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true danibrenna/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t danibrenna/multi-client ./client
+  - docker build -t danibrenna/multi-server ./server
+  - docker build -t danibrenna/multi-nginx ./nginx
+  - docker build -t danibrenna/multi-worker ./worker
+  # log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # takes images and send to docker hub
+  - docker push danibrenna/multi-client
+  - docker push danibrenna/multi-server
+  - docker push danibrenna/multi-nginx
+  - docker push danibrenna/multi-worker
